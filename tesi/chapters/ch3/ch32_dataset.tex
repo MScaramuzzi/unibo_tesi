@@ -1,0 +1,60 @@
+\section{Dataset}
+
+Water-lifting plants are represented mathematically as directed graphs. In a simplified definition of the components of a water-lifting plant the nodes can either be described as \textbf{units} and \textbf{manifolds}. 
+
+The units indicate of course the pumps, but more in particular they represent a black-box representation of pumps and the respective electric motor. 
+
+The manifolds represent a collector structure that takes the outgoing flow of n pumps and distribute it to m output pumps. 
+
+In order to preserve the intellectual property and commercial rights of the owners of the dataset, the thesis will not illustrate the contents of said dataset, it will only be employed in the final model comparison. 
+In its place it has been performed the generation of  a synthetic dataset. 
+
+The problem setting and the know-how that has been gained during my work for Lutech will be employed in the creation of the new dataset.
+
+The synthatic dataset, from now on gen\_ds, has been constructed incrementally by starting from a certain feature structure and from nominal pump electric energy values that are taken from real world applications.  
+
+The graph structure has also been .
+
+\subsubsection{Dataset structure}
+
+Therefore after describing the inherent characteristics of the data, the dataset can be mathematically formulated as follows:
+
+\begin{itemize}
+    \item $U_i$ , with i = 1 .... n
+    \item $\{U_i\}_{i=1}^n$
+    \item $V_i$ , with i = 1 .... n
+    \item $M_j$ , with j = 1 .... m
+    \item $\eta_i$
+    \item $EE_i$
+    \item $HE_i$
+\end{itemize}
+
+$\eta$, $V_i$ $EE$, $HE$ are features of the $U_i$.
+
+Moreover an additional feature need to be considered $HE_{out}$, it is the plant output that is ingested into for example a water distribution network to end users.
+
+\subsection{Dataset creation}
+
+
+
+
+\subsection{Noise sources}
+
+In real-world settings the data is not in an ideal or perfect condition. The data is always subject to a certain number of sources of noise or in general of the alteration of the ideal condition on which the data is from. 
+
+
+\subsubsection{Sensor noise}
+
+Introducing sensor noise is the most straightforward way to make the dataset representative of a real word environment. 
+
+This due to the fact that noise, in any kind of sensoring device, is usually modelled as a random variable $X$ which is characterized by \textbf{gaussian noise} with \textbf{zero mean} and \textbf{unit variance} [INSERISCI QUI CITAZIONE], represented mathematically as follows 
+
+$X \sim \mathcal{N}(\mu,\sigma^2), \quad \mu = 0,\ \sigma^2 = 1$. 
+
+Therefore the data has been conditioned in order to match this condition in the following way .....
+
+
+
+\subsubsection{Negative suction head noise}
+
+

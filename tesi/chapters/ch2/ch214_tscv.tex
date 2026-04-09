@@ -1,0 +1,94 @@
+\subsection{Time Series Cross validation}
+
+\acrfull{tscv} adapts resampling and model selection procedures to data with temporal dependence, preventing information leakage from the future into the past. Unlike \acrfull{iid} K-fold schemes, \acrshort{tscv} preserves the chronological order within each training/validation split and evaluates models on genuinely out-of-sample horizons. This is essential for  \acrshort{dnns}, whose large capacity and temporal receptive fields make them particularly prone to overfitting and leakage if standard random splits are used [FPP-Textbook; \acrshort{tscv}-Principles].
+
+\paragraph{Problem definition}
+
+A common framework is rolling-origin evaluation (also called walk-forward validation). Let $y_t$ denote the series at time $t$ and $h$ the forecast horizon (one-step or multi-step). At each origin 
+$T_k$, the model is trained on data up to 
+$T_k$ and validated on 
+$(T_k+1,\ .... \ , \ T_k+ h)$.
+
+The origin is then advanced by a step $s$ \ (e.g., $s=1$ or $s=h$), and the process repeats, yielding multiple non-overlapping or partially overlapping validation windows. Two main variants are used: 
+
+\begin{enumerate}[label=\roman*.]
+    \item expanding window (the training set grows with $k$),
+    \item sliding window (the training set keeps a fixed length $w$, focusing the learner on the most recent distribution)[FPP-Textbook; RO-Armstrong].
+\end{enumerate}
+
+
+\myfigure
+  {expanding_window}
+  {Expanding window TSCV}
+  {ht}
+  {For more details, see Uber’s official article on the Omphalos project: \href{https://www.uber.com/en-IT/blog/omphalos/}{Omphalos Uber Engineering}.}
+
+
+
+\myfigure{sliding_window}{Sliding window TSCV}{H}{}
+
+    
+The two different behaviours are show in \figref{fig:expanding_window} and in \figref{fig:sliding_window}. 
+
+
+In the former we can observe that the training data increments across the applications of the algorithm. Instead in the latter we can see that the training data has the same fixed size and it is slid onwards. \\
+
+For \acrshort{dnns} applied to sequences, the \acrshort{tscv} design must align with the model’s temporal context. Convolutional or recurrent architectures (including \acrshort{tcns} and \acrshort{lstm}s) possess effective receptive fields that can span hundreds of time steps. Consequently, the training window $w$ must exceed the maximum context length plus feature lags; otherwise, validation performance underestimates deploy-time behaviour.  Moreover, when validating $h$ h-step forecasts, the label construction should match the task formulation: direct multi-horizon outputs (e.g., vector targets $(y_{t+1}, ..., y_{t+h})$ ) versus recursive strategies (feeding predictions back as inputs). The chosen strategy must be held fixed across folds to ensure comparability [DL-Practice; SeqModeling-Eval].\\
+
+An additional consideration is temporal gaps between training and validation segments. Introducing a small embargo (gap) removes near-boundary autocorrelation and feature leakage introduced by transformations computed on sliding windows (e.g., rolling means) or by delayed data availability (publication lags). In high-frequency or finance-like contexts, purged and embargoed schemes are used to avoid overlap between the information sets of train and validation examples; analogous precautions are beneficial in sensor and operations data when strong local dependence exists [Leakage-BlockedCV; PurgedCV].
+
+
+\paragraph{Practical Pipeline for \acrshort{dnns} under \acrshort{tscv}}
+
+\subparagraph{Data preprocessing without leakage}
+ 
+ All transformations that estimate statistics from data-scaling, normalization, imputation, \acrfull{pca}/embedding fits—must be fit on the training split only at each origin and then applied to the validation split. For multi-series panels, scaling is either per-series (robust to cross-sectional scale differences) or learned globally but still fit on the training portion at each origin [Leakage-BlockedCV; Panel-TS].
+
+\subparagraph {Batching and windowing} Supervised examples are typically constructed via rolling windows of length 
+$L$ to predict the next  $h$ targets. Within each origin, the training batches must be composed exclusively of windows whose right edge $ \leq T_k$.
+
+For \acrshort{rnns}, ensure state is reset or carefully carried only within the training partition; for \acrshort{tcns} and transformers, enforce causal masks in the model and strict chronological ordering in the dataloader [DL-Practice].
+
+\subparagraph {Early stopping and learning-rate schedules} Early stopping uses a validation set inside each origin. To avoid contaminating the external validation horizon, it is preferable to split the training portion chronologically into an internal train/val (e.g., last $10\%$ of the training window for early stopping), reserving the true validation horizon for final scoring at that origin. Learning-rate schedules tied to validation loss should reference this internal validation only, not the external horizon [ES-TemporalSplit].
+
+\subparagraph {Hyperparameter tuning and nested evaluation} Hyperparameter selection (network depth/width, kernel sizes/dilations, dropout, optimizer settings, context length 
+$L$) must be nested within the \acrshort{tscv} procedure to avoid optimistic bias. In practice, one performs inner \acrshort{tscv} (or Bayesian optimization with time-aware splits) at a subset of origins, locks the configuration, and then reports performance from an outer rolling-origin evaluation. When computational budgets are tight, use a small number of representative origins for the inner loop and a larger set for the outer loop [NestedCV; BO-Time].
+
+\subparagraph{Multi-horizon and probabilistic metrics} Because forecasting tasks often require full paths rather than point predictions, evaluation should include horizon-resolved metrics (e.g., \acrlong{rmse} $RMSE_h$, \acrlong{mape} $MAPE_h$) and aggregate measures (e.g., \acrfullmath{smape} ), as well as probabilistic scores if the network outputs quantiles or distributions (pinball loss for quantiles, continuous ranked probability score for distributions). Scale-free metrics such as \acrshortmath{mase} facilitate comparison across series, provided the scaling is computed from the training data at each origin [FPP-Textbook; ProbForecast-Metrics].
+
+\subparagraph{Uncertainty and variability control} \acrshort{dnns} training stochasticity (random initialisation, minibatch order, dropout) can yield high variance across runs. To obtain stable estimates, fix random seeds, report averages and standard errors over multiple fits per origin, or apply snapshot ensembling. Confidence intervals can be approximated via block bootstrap over the set of origins, respecting temporal dependence [DL-Practice; BlockBootstrap].
+
+\paragraph{Design Choices and Trade-offs}
+\subparagraph{
+Expanding vs sliding windows}
+
+Expanding windows leverage more historical data and are appropriate for stationary or slowly drifting processes [ConceptDrift]; sliding windows emphasise recency and may track regime shifts more effectively [ConceptDrift]. Although \acrshort{dnns} benefit from larger datasets, stale regimes can impair generalisation, especially when the data-generating process shifts, so limiting or discounting obsolete history becomes beneficial [ConceptDrift]. \\
+
+A pragmatic, time-series-aware compromise is a hybrid windowing strategy: use an expanding window with a cap on maximum lookback [FRW-2025], and apply periodic pruning or down-weighting within the retained history (e.g., flexible/weighted rolling windows) to prioritise recent regimes [FRW-2025]; complement this with adaptive window-size selection on the sliding portion to react promptly to distributional change [ASW-2020].
+
+\subparagraph{Origin frequency and computational cost}
+
+Denser origins (small step $s$) yield more precise estimates but increase training cost. For heavy \acrshort{dnns}, a stratified set of origins targeting key seasons or regimes (e.g., pre/post policy changes, demand peaks) achieves efficiency without biasing results, provided coverage is documented [RO-Armstrong].
+
+\subparagraph{Group- and hierarchy-aware splits} In panels (multiple related series), \acrshort{tscv} should avoid cross-sectional leakage. One option is series-wise splits (all series use the same temporal cut), combined with entity holdout experiments to test transfer learning: train on a subset of series and validate on unseen entities at later times. For hierarchical data, reconcile forecasts after each origin to ensure aggregation consistency [Panel-TS; HierReconcile].
+
+\subparagraph{Data latency and real-time constraints} If some features are only known with delay (e.g., monthly indicators released after month-end), construct feature sets using only information actually available at the origin. Backtesting should emulate operational lags and missingness patterns; otherwise, \acrshort{dnn}s will learn from unrealizable inputs [Nowcasting-Latency].
+
+\paragraph{Reporting and Reproducibility}
+
+A rigorous \acrshort{tscv} report for \acrshort{dnn}s should specify: 
+
+% (i) split strategy (expanding/sliding), embargo length, and origin set; (ii) preprocessing steps and where they are fit; (iii) model architecture and context length; (iv) early-stopping protocol and inner/outer tuning design; (v) evaluation metrics (point and probabilistic) by horizon; and (vi) measures for training variance (seeds, repeats). 
+
+\begin{enumerate}[label=\roman*.]
+
+\item split strategy (expanding/sliding), embargo length, and origin set
+\item preprocessing steps and where they are fit
+\item model architecture and context length
+\item early-stopping protocol and inner/outer tuning design
+\item valuation metrics (point and probabilistic) by horizon
+\item measures for training variance (seeds, repeats)
+
+\end{enumerate}
+
+Providing per-origin scores and aggregated summaries (mean, median, robust spread) allows downstream statistical comparisons and ablation analyses [\acrshort{tscv}-Principles; DL-Practice].

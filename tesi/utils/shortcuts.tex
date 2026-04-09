@@ -1,0 +1,50 @@
+\newcommand{\acrshortmath}[1]{\ensuremath{\mathit{\acrshort{#1}}}}
+\newcommand{\acrfullmath}[1]{%
+    \acrlong{#1} (\acrshortmath{#1})%
+}
+
+
+
+
+
+\newcounter{sharedfignote}
+
+\newcommand{\myfigure}[4]{%
+    \begin{figure}[#3]
+        \centering
+        \includegraphics[width=0.70\textwidth]{#1}
+
+        \caption[#2]{%
+            #2%
+            % -------------------------
+            % RICONOSCIMENTO ARGOMENTO VUOTO
+            % -------------------------
+            \if\relax\detokenize{#4}\relax
+                % Caso vuoto → RIUSO nota esistente
+                \ifnum\value{sharedfignote}>0
+                    \footnotemark[\value{sharedfignote}]
+                \fi
+            \else
+                % Caso NON vuoto → CREA una nuova nota
+                \footnotemark
+                \setcounter{sharedfignote}{\value{footnote}}
+            \fi
+        }
+        \label{fig:#1}
+    \end{figure}
+
+    % SOLO se #4 NON è vuoto → stampa testo della nota
+    \if\relax\detokenize{#4}\relax
+        % niente
+    \else
+        \footnotetext{#4}
+    \fi
+}
+
+
+
+
+
+\newcommand{\figref}[1]{Fig.~\ref{#1}}
+
+

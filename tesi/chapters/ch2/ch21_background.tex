@@ -1,0 +1,53 @@
+\section{Background}
+
+\subsection{Time Series data analysis}
+
+Time series analysis studies data observed over time to characterise its stochastic structure and to support inference and forecasting. A classical decomposition separates a series into trend (long-term change), seasonality (systematic periodic variation), and remainder (irregular component), while stochastic modelling accounts for autocorrelation and non-stationarity.\\
+
+Foundational approaches include the Box–Jenkins family of \acrfull{arima} \ models, which combine autoregression, differencing and moving-average components to capture short- and medium-range temporal dependencies in stationary or difference-stationary series [FPP-Textbook]. Exponential smoothing state-space models provide a complementary framework with strong performance in short-term forecasting, and contemporary practice extends these tools with hierarchical and grouped forecasting, exogenous regressors, and calendar effects [FPP-Textbook].
+
+From an inferential perspective, model adequacy is routinely assessed through residual diagnostics (e.g., whiteness tests and autocorrelation checks) and out-of-sample evaluation via rolling-origin or time-series cross-validation; in forecasting applications, accuracy is summarised with scale-free metrics such as \acrfull{mase} or percentage-based measures, chosen with attention to zeros and scale issues [FPP-Textbook]. In multivariate or hierarchical contexts, reconciliation techniques ensure coherence across aggregation levels, while state-space representations enable principled handling of missing data and real-time filtering/smoothing [FPP-Textbook].
+
+\acrfull{dl} and modern sequence models increasingly complement classical methods, especially when long-range dependencies, nonlinearity, or high-dimensional covariates are prominent. Convolutional and recurrent architectures (and their temporal variants) can model complex patterns that are difficult for linear models, though they typically require larger datasets and careful regularisation; empirical studies on sequence modelling document conditions under which such architectures outperform canonical recurrent networks in long-memory tasks [TCN-2018].
+
+
+\subsection{Isolation forest}
+
+\acrfull{if} is an ensemble method for anomaly detection that departs from density- or distance-based paradigms: it isolates observations by recursively partitioning the feature space with random splits. The key insight is that anomalies are “few and different”, so they are expected to be isolated by shorter paths in random partitioning trees. An isolation forest consists of many isolation trees (\textit{iTrees}), each grown by randomly selecting a feature and a split value within that feature’s range; the average path length required to isolate a point, normalised by the expected path length in random binary trees, yields an anomaly score (shorter-than-expected paths imply higher anomaly likelihood) [IF-2008; IF-2012].
+
+This behaviour can be visualized in \figref{fig:isolation_forest}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.7\textwidth]{isolation_forest.png}
+    \caption[Visualisation of iTrees]%
+    {Visualisation of iTrees ~\cite{isolation_forest_image}}
+    \label{fig:isolation_forest}
+\end{figure}
+
+Algorithmically, \acrshort{if} draws subsamples of size $\psi$ (often $256$) to build each tree to a maximum height of  $\lceil \log_{2} \psi \rceil$ %[Inserisci qui fonte]%. 
+For a new observation, the method computes the average path length across the ensemble and converts it into a score in \((0, 1]\); thresholds can then be selected via validation or assumed contamination levels. Compared with distance- or density-based detectors, \acrshort{if} is computationally efficient (near-linear in the number of samples) and scales well to high dimensions, because it avoids explicit proximity computations and focuses on isolation rather than distribution estimation. %[Inserisci qui fonte] %
+
+Empirically, it performs competitively across diverse anomaly-detection benchmarks and is widely used in industrial monitoring, fraud detection, and time-series anomaly screening. Limitations include sensitivity to feature scaling and potential degradation when anomalies are not easier to isolate than nominal data (e.g., when anomalies lie within dense clusters) [IF-2008; IF-2012].
+
+\subsection{Deep Neural Networks}
+
+\acrfull{dnns} are compositions of many nonlinear layers that learn hierarchical representations directly from data, trained end-to-end by back-propagation and gradient-based optimisation. Depth enables the progressive abstraction of features, lower layers capture local or short-range structure, while higher layers learn task-specific invariances, supporting state-of-the-art performance in perception, language, and sequential modelling [DL-Nature-2015].\\
+
+For sequential data, \acrfull{rnns} model temporal dependence by maintaining a hidden state; \acrfull{lstm} units address vanishing/exploding gradients by introducing gated additive memory paths, enabling learning of long-range dependencies and achieving strong results in time-series forecasting, speech, and language tasks [LSTM-1997]. Convolutional architectures tailored to sequences—often termed 
+\acrfull{tcns}
+—use causal, dilated convolutions and residual connections to capture long effective receptive fields without recurrence; systematic evaluations have shown TCNs to outperform canonical LSTMs on a range of sequence benchmarks while offering stable gradients and parallel training [TCN-2018]. \\
+
+% inserisci qui immagine rnn/lstm e cnn
+
+Across architectures, effective \acrshort{dl} practice integrates:
+
+\begin{itemize}
+    \item regularisation (dropout, weight decay)
+    \item normalisation
+    \item careful initialisation
+    \item optimisation heuristics (adaptive optimisers, learning-rate schedules)
+\end{itemize}
+
+ together with disciplined evaluation on temporal splits to prevent leakage. When applied to time series, \acrshort{dnns} are typically combined with domain-appropriate preprocessing (detrending, calendar features), exogenous covariates, and probabilistic output layers or quantile losses for uncertainty-aware forecasting; their advantages in representation learning must be balanced against data requirements, interpretability considerations, and computational cost [DL-Nature-2015; TCN-2018].
+
