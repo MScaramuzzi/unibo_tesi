@@ -25,6 +25,8 @@ jobs:
         with:
           root_file: tesi/tesi_new.tex
           work_in_root_file_dir: true
+          latexmk_use_xelatex: true
+
       - name: Generate build artifact
         uses: actions/upload-artifact@main
         with:
