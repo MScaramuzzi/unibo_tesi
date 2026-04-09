@@ -1,0 +1,94 @@
+\documentclass[a4paper,singleside,12pt]{report} % Uncomment this for single side pdf.
+%\documentclass[a4paper,twoside,12pt]{report} % ☣️ Uncomment this for printing.
+
+% packages
+\usepackage{utils/ai_bo_thesis}
+\usepackage{float}
+\usepackage[english]{babel}
+\usepackage[T1]{fontenc}
+\usepackage{graphicx}
+\usepackage{lmodern}
+\usepackage[colorlinks=true,backref=page]{hyperref}
+\hypersetup{
+    urlcolor=blue,   % URL blu
+    linkcolor=black, % link interni neri
+    citecolor=black
+}
+
+\usepackage[acronym]{glossaries}
+\usepackage{footmisc}
+\setlength{\skip\footins}{20pt}   % default ≈ 10–12pt
+
+% \usepackage[backend=biber,style=trad-plain, sorting=nty,firstinits=true]{biblatex}
+\usepackage[numbers,sort&compress]{natbib}
+\usepackage{enumitem}
+
+
+% Setup
+\makeglossaries
+%\addbibresource{utils/biblio.bib}
+%\bibliographystyle{plainnat}   % or abbrvnat, unsrtnat, etc.
+\bibliographystyle{unsrtnat}
+
+
+\setmainfont{Times New Roman}
+\setcounter{tocdepth}{3}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.05em}
+
+\input{utils/acronyms}
+\input{utils/shortcuts.tex}
+\input{utils/formatting.tex}
+
+\graphicspath{
+  {chapters/ch2/img/}
+  % {chapters/ch3/img/}
+}
+
+\renewcommand{\figurename}{Fig.}
+
+\begin{document}
+	
+	\title{Design and calibration of a digital twin of a water lifting system}
+	\topic{Artificial Intelligence in Industry}
+	\candidate{Marco Scaramuzzi}
+	\supervisor{Prof.~Michele Lombardi}
+    %\cosupervisor{& } % One co-supervisor.
+    
+%	\cosupervisors{& Dott.~Ing.~Luigi Bianchi\\& Dott~Avv.~Lucia Rossi} % More than one co-supervisor.
+	\academicyear{2025-2026}
+	\session{V}
+	
+	\frontispiece 
+	\dedication{inserisci qui dedica}
+	\toc
+	\figstoc
+	\tablestoc
+    \printglossary[type=\acronymtype]
+
+    \begintext
+
+    \include{chapters/ch0/ch0_abstract}
+
+
+    \include{chapters/ch1/ch1_intro}
+    
+ 
+    \include{chapters/ch2/ch2_theoretical_background}
+
+    \include{chapters/ch3/ch3_exp_work}
+
+    \include{chapters/ch4_results/ch4_results}
+
+    \include{chapters/ch5_conclusions/ch5_conclusions}
+
+	\appendix
+
+    \bibliography{utils/biblio}    % no .bib extension
+	% \printbibliography[heading=bibintoc] % biblatex
+
+	
+	\include{chapters/acknowledgements}
+        
+		
+\end{document}

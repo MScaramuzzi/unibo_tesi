@@ -29,7 +29,7 @@ jobs:
         uses: actions/upload-artifact@main
         with:
           name: build
-          path: tesi/tesi.pdf
+          path: tesi/tesi_new.pdf
   deploy:
     name: Deploy
     environment:
