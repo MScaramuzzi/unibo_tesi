@@ -23,7 +23,7 @@ jobs:
       - name: Compile thesis
         uses: xu-cheng/latex-action@v3
         with:
-          root_file: tesi/tesi.tex
+          root_file: tesi/tesi_new.tex
           work_in_root_file_dir: true
       - name: Generate build artifact
         uses: actions/upload-artifact@main
@@ -34,7 +34,7 @@ jobs:
     name: Deploy
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}/tesi.pdf
+      url: ${{ steps.deployment.outputs.page_url }}/tesi_new.pdf
     runs-on: ubuntu-latest
     needs: build
     if: github.ref == 'refs/heads/main'
